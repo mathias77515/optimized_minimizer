@@ -2,12 +2,12 @@ from setuptools import setup
 
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
-    name='optimized_minimizer',
+    name='minimizer4mpi',
     url='#',
     author='Mathias Regnier',
     author_email='mathias.p.regnier@gmail.com',
     # Needed to actually package something
-    packages=['optimized_minimizer'],
+    packages=[],
     # Needed for dependencies
     install_requires=['numpy'],
     # *strongly* suggested for sharing
