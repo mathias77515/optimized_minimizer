@@ -9,7 +9,7 @@ setup(
     # Needed to actually package something
     packages=find_packages(),
     # Needed for dependencies
-    install_requires=[],
+    install_requires=['multiprocess'],
     # *strongly* suggested for sharing
     version='1.2',
     # The license can be anything you like
