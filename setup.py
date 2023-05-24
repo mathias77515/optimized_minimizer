@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     # Needed to silence warnings (and to be a worthwhile package)
-    name='minimizer4mpi',
+    name='solver4mpi',
     url='https://github.com/mathias77515/optimized_minimizer',
     author='Mathias Regnier',
     author_email='mathias.p.regnier@gmail.com',

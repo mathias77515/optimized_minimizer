@@ -1,0 +1,9 @@
+README.md
+setup.py
+minimizer4mpi.egg-info/PKG-INFO
+minimizer4mpi.egg-info/SOURCES.txt
+minimizer4mpi.egg-info/dependency_links.txt
+minimizer4mpi.egg-info/top_level.txt
+src/__init__.py
+src/minimizer_multiprocess.py
+src/test.py
