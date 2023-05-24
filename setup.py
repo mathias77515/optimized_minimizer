@@ -11,7 +11,7 @@ setup(
     # Needed for dependencies
     install_requires=[],
     # *strongly* suggested for sharing
-    version='1.1',
+    version='1.2',
     # The license can be anything you like
     license='',
     description='Optimized minimizer for MPI python.',
