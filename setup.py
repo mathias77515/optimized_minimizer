@@ -9,9 +9,9 @@ setup(
     # Needed to actually package something
     packages=[],
     # Needed for dependencies
-    install_requires=['numpy'],
+    install_requires=[],
     # *strongly* suggested for sharing
-    version='0.1',
+    version='0.2',
     # The license can be anything you like
     license='',
     description='Optimized minimizer for MPI python.',
