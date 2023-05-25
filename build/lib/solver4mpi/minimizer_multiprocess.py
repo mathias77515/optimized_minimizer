@@ -38,7 +38,7 @@ class WrapperMPI:
     def __init__(self, comm, chi2, cpu_per_tasks, x0, method='TNC', tol=1e-3, options={}, verbose=False):
 
         #FitMultiProcessCPU.__init__(self, chi2, cpu_per_tasks, x0, method=method, tol=tol, options=options)
-        self.verbose = verbose
+
         ### MPI distribution
         self.comm = comm
         self.size = self.comm.Get_size()
@@ -58,15 +58,10 @@ class WrapperMPI:
         number_loop = len(index_per_process) // self.fit_multi_process.nb_cpu
         rest_loop = len(index_per_process) % self.fit_multi_process.nb_cpu
 
-        if self.verbose:
-            print(f'Number of loop : {number_loop}')
-            print(f'Number of rest : {rest_loop}')
-
         for iloop in range(number_loop):
             
             res[index_per_process[iloop*self.nb_cpu:(iloop+1)*self.nb_cpu]] = self.fit_multi_process.perform_cpu(list(index_per_process[iloop*self.nb_cpu:(iloop+1)*self.nb_cpu]))
-            if self.verbose:
-                print(res[index_per_process[iloop*self.nb_cpu:(iloop+1)*self.nb_cpu]])
+            
         res[index_per_process[-rest_loop:]] = self.fit_multi_process.perform_cpu(list(index_per_process[-rest_loop:]))
         
         return res
