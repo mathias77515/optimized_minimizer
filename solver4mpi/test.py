@@ -28,7 +28,7 @@ def _scale_components_1pix(beta, ipix, mref, allnus):
 
     return m_nu
 
-nside = 4
+nside = 16
 sky=pysm3.Sky(nside=nside, preset_strings=['d0'], output_unit="uK_CMB")
 nu0 = 150
 mref = np.array(sky.get_emission(nu0 * u.GHz, None).T * utils.bandpass_unit_conversion(nu0*u.GHz, None, u.uK_CMB))
@@ -40,7 +40,6 @@ m_nu = np.zeros((len(allnus), 12*nside**2, 3))
 for j in range(12*nside**2):
     m_nu[:, j, :] = _scale_components_1pix(np.array([1.54]), j, mref, allnus)
 
-
 def chi2(x, ipix, mref, m_nu, allnus):
 
     #map_beta[ipix] = x
@@ -48,22 +47,19 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-#val = chi2(np.array([1.54]), 0, A, mref, m_nu)
-nb_cpu = 2#os.cpu_count()
 index_beta = np.arange(0, 100, 1)
 
-
-#print(index_beta)
-#print(nb_cpu)
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
-#val = chi2_partial(np.array([1.54]), 0)
-#print(val)
-#beta_fit = FitMultiProcessCPU(comm, chi2_partial, nb_cpu, x0=np.ones(1), method='L-BFGS-B', tol=1e-3).perform(list(index_beta))
-#print(beta_fit)
 
+start = time.time()
 
-beta_est = WrapperMPI(comm, chi2_partial, nb_cpu, x0=np.ones(1), verbose=True).perform(index_beta)
-comm.Allreduce(MPI.IN_PLACE, beta_est, op=MPI.SUM)
-print(beta_est)
+beta_est = WrapperMPI(comm, chi2_partial, x0=np.ones(1), verbose=True).perform(index_beta)
+
+end = time.time()
+
+if comm.Get_rank() == 0:
+    print(f'Execution time : {end - start} s')
+    print(f'Residuals :', beta_est - 1.54)
+
 
 

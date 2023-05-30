@@ -1,1 +1,1 @@
-from .minimizer_multiprocess import FitMultiProcessCPU
+from .minimizer_multiprocess import WrapperMPI

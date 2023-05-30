@@ -9,12 +9,12 @@ setup(
     # Needed to actually package something
     packages=find_packages(),
     # Needed for dependencies
-    install_requires=['multiprocess'],
+    install_requires=['scipy', 'pyoperators', 'numpy'],
     # *strongly* suggested for sharing
-    version='2.1',
+    version='3.0',
     # The license can be anything you like
     license='',
-    description='Optimized minimizer for MPI python.',
+    description='Optimized minimizer for MPI in python.',
     # We will also need a readme eventually (there will be a warning)
     # long_description=open('README.txt').read(),
 )
