@@ -28,7 +28,7 @@ def _scale_components_1pix(beta, ipix, mref, allnus):
 
     return m_nu
 
-nside = 16
+nside = 4
 sky=pysm3.Sky(nside=nside, preset_strings=['d0'], output_unit="uK_CMB")
 nu0 = 150
 mref = np.array(sky.get_emission(nu0 * u.GHz, None).T * utils.bandpass_unit_conversion(nu0*u.GHz, None, u.uK_CMB))
@@ -47,13 +47,13 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-index_beta = np.arange(0, 100, 1)
+index_beta = np.arange(0, 10, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 
 start = time.time()
 
-beta_est = WrapperMPI(comm, chi2_partial, x0=np.ones(1), verbose=True).perform(index_beta)
+beta_est = WrapperMPI(comm, chi2_partial, x0=np.ones(10), verbose=True).perform(index_beta)
 
 end = time.time()
 

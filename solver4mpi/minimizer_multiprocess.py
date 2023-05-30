@@ -63,7 +63,10 @@ class WrapperMPI:
         Main function to be called. Perform the minimization on the pixel indexed by index_theta array.
         
         '''
-        res = np.zeros(len(index_theta))
+        if len(self.x0) > 1:
+            res = np.zeros((len(index_theta), len(self.x0)))
+        else:
+            res = np.zeros(len(index_theta))
         index_per_process = self._split_params(index_theta)
         if self.verbose:
             print(f'Doing minimization on pixel {index_per_process}')
