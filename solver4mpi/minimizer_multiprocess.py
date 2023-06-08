@@ -49,8 +49,11 @@ class WrapperCPU:
     
     def perform(self, x):
         results = np.zeros(x.shape)
-        loop = len(x) // self.ncpu
-        rest = len(x) % self.ncpu
+        if x.shape[0] < self.ncpu:
+            self.ncpu = x.shape[0]
+            
+        loop = x.shape[0] // self.ncpu
+        rest = x.shape[0] % self.ncpu
         start = time.time()
 
         if self.verbose:
@@ -59,7 +62,6 @@ class WrapperCPU:
             print(f"There is {rest} estimation remain")
 
         for i in range(loop):
-
             pool = mp.Pool(processes=self.ncpu)
             results[self.ncpu*i:self.ncpu*(i+1)] = pool.starmap(self._apply_minimize, [[param_values] for param_values in x[self.ncpu*i:self.ncpu*(i+1)]])
             pool.close()
