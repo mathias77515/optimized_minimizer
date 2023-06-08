@@ -5,6 +5,39 @@ import os
 import multiprocess as mp
 import time
 
+
+def run(x, ncpu, chi2, x0, method='TNC', tol=1e-3, options={}, verbose=True):
+
+        results = np.zeros(x.shape)
+        if x.shape[0] < ncpu:
+            ncpu = x.shape[0]
+
+        loop = x.shape[0] // ncpu
+        rest = x.shape[0] % ncpu
+
+        if verbose:
+            print(f"You're asking to do {loop} loop with {ncpu} CPUs each")
+            print(f"There is {rest} estimation remain")
+
+        start = time.time()
+        for i in range(loop):
+
+            wrap = WrapperCPU(chi2, x0, nproc=ncpu, method=method, tol=tol, options=options, verbose=False)
+
+            results[ncpu*i:ncpu*(i+1)] = wrap.perform(x[ncpu*i:ncpu*(i+1)])
+
+
+        if rest != 0:
+            wrap = WrapperCPU(chi2, x0, nproc=rest, method=method, tol=tol, options=options, verbose=False)
+            results[-rest:] = wrap.perform(x[-rest:])
+
+        end = time.time()
+
+        if verbose:
+            print(f'Estimation done on {x.shape[0]} parameters in {end - start} s')
+
+        return results
+
 class WrapperCPU:
 
     def __init__(self, chi2, x0, nproc=None, method='TNC', tol=1e-3, options={}, verbose=False):
@@ -46,35 +79,15 @@ class WrapperCPU:
 
         r = minimize(self.chi2, x0=self.x0, args=args, method=self.method, tol=self.tol, options=self.options)
         return r.x
-    
+
     def perform(self, x):
-        results = np.zeros(x.shape)
-        if x.shape[0] < self.ncpu:
-            self.ncpu = x.shape[0]
-
-        loop = x.shape[0] // self.ncpu
-        rest = x.shape[0] % self.ncpu
-        start = time.time()
-
-        if self.verbose:
-            
-            print(f"You're asking to do {loop} loop with {self.ncpu} CPUs each")
-            print(f"There is {rest} estimation remain")
-
-        for i in range(loop):
-            pool = mp.Pool(processes=self.ncpu)
-            results[self.ncpu*i:self.ncpu*(i+1)] = pool.starmap(self._apply_minimize, [[param_values] for param_values in x[self.ncpu*i:self.ncpu*(i+1)]])
-            pool.close()
-            pool.join()
         
-        if rest != 0:
-            pool = mp.Pool(processes=rest)
-            results[-rest:] = pool.starmap(self._apply_minimize, [[param_values] for param_values in x[-rest:]])
-
-        end = time.time()
-        if self.verbose:
-            print(f'Estimation done on {x.shape[0]} parameters in {end - start} s')
+        pool = mp.Pool(processes=self.ncpu)
+        results = pool.starmap(self._apply_minimize, [[param_values] for param_values in x])
         
+        # Close and join results
+        pool.close()
+        pool.join()
 
         return results
 
