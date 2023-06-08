@@ -4,39 +4,95 @@ from scipy.optimize import minimize
 import os
 import multiprocess as mp
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 
-def run(x, ncpu, chi2, x0, method='TNC', tol=1e-3, options={}, verbose=True):
+class WrapperMPI:
 
-        results = np.zeros(x.shape)
-        if x.shape[0] < ncpu:
-            ncpu = x.shape[0]
+    def __init__(self, comm, chi2, x0, method='TNC', tol=1e-10, options={}, verbose=False):
 
-        loop = x.shape[0] // ncpu
-        rest = x.shape[0] % ncpu
+        ### MPI distribution
+        self.comm = comm
+        self.size = comm.Get_size()
+        self.rank = comm.Get_rank()
 
-        if verbose:
-            print(f"You're asking to do {loop} loop with {ncpu} CPUs each")
-            print(f"There is {rest} estimation remain")
+        ### Minimizer
+        self.chi2 = chi2
+        self.x0 = x0
+        self.method = method
+        self.tol = tol
+        self.options = options
 
-        start = time.time()
-        for i in range(loop):
+    def _split_params(self, index):
 
-            wrap = WrapperCPU(chi2, x0, nproc=ncpu, method=method, tol=tol, options=options, verbose=False)
+        '''
+        
+        Distribute the parameters across all available processes
 
-            results[ncpu*i:ncpu*(i+1)] = wrap.perform(x[ncpu*i:ncpu*(i+1)])
+        '''
+        return np.where(index % self.size == self.rank)[0]
+
+    def _apply_minimize(self, args):
+
+        '''
+        
+        Apply the scipy.optimize.minimize method on the fun cost function.
+
+            
+        '''
+
+        r = minimize(self.chi2, x0=self.x0, args=args, method=self.method, tol=self.tol, options=self.options)
+        return r.x
 
 
-        if rest != 0:
-            #wrap = WrapperCPU(chi2, x0, nproc=rest, method=method, tol=tol, options=options, verbose=False)
-            results[-rest:] = wrap.perform(x[-rest:])
+    def __call__(self, index):
 
-        end = time.time()
+        res = np.zeros(index.shape)
+        x_per_process = self._split_params(index)
+        #print(self.rank, x_per_process)
 
-        if verbose:
-            print(f'Estimation done on {x.shape[0]} parameters in {end - start} s')
+        for ii, i in enumerate(x_per_process):
+            res[i] = self._apply_minimize(args=(i))
+        
+        return self.comm.allreduce(res, op=MPI.SUM)
 
-        return results
+class DistributeMPI(WrapperMPI):
+
+    def __init__(self, comm, ncpu, chi2, x0, method='L-BFGS-B', tol=1e-10, options={}, verbose=False):
+
+        self.ncpu = ncpu
+        WrapperMPI.__init__(self, comm, chi2, x0, method=method, tol=tol, options=options, verbose=verbose)
+
+    def _split_params_with_cpu(self, index, cpu):
+
+        index_per_process = self._split_params(index)
+        
+        chunk_size = len(index_per_process) // cpu
+        chunk_rest = len(index_per_process) % cpu
+        if chunk_rest != 0:
+            chunk_size += 1
+        index_per_process_per_cpu = np.array_split(index_per_process, chunk_size)
+
+        return index_per_process_per_cpu
+
+
+    def run(self, x):
+        res = np.zeros(x.shape[0])
+        index_per_process_per_cpu = self._split_params_with_cpu(x, self.ncpu)
+        _loop = len(index_per_process_per_cpu)
+
+        for i in range(_loop):
+            print(self.rank, len(index_per_process_per_cpu[i]), index_per_process_per_cpu[i])
+            res[index_per_process_per_cpu[i]] = self.perform(np.array(index_per_process_per_cpu[i]))
+
+        return self.comm.allreduce(res, op=MPI.SUM)
+
+
+    def perform(self, x):
+        with ThreadPoolExecutor(max_workers=self.ncpu) as executor:
+            futures = [executor.submit(self._apply_minimize, i) for i in x]
+            results = [future.result() for future in futures]
+        return np.concatenate(results)
 
 class WrapperCPU:
 
@@ -92,6 +148,8 @@ class WrapperCPU:
         return results
 
 
+
+"""
 
 
 class WrapperMPI:
@@ -171,3 +229,4 @@ class WrapperMPI:
         self.comm.Barrier()
  
         return self._joint_process(res)
+"""
