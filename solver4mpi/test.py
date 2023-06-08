@@ -51,7 +51,7 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-index_beta = np.arange(0, 150, 1)
+index_beta = np.arange(0, 15, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 
@@ -59,12 +59,12 @@ os.environ['OMP_NUM_THREADS'] = '8'
 
 if rank == 0:
     start = time.time()
-    beta_i = WrapperCPU(chi2_partial, x0=np.ones(1), nproc=8, verbose=True, tol=1e-20, method='TNC').perform(list(index_beta))
+    beta_i = WrapperCPU(chi2_partial, x0=np.ones(1), nproc=2, verbose=True, tol=1e-20, method='TNC').perform(index_beta)
     end = time.time()
     print(f'Execution time : {end - start} s')
-    print(f'Residuals :', beta_i[:5] - beta[:5])
-    print(f'estimated :', beta_i[:5])
-    print(f'true :', beta[:5])
+    print(f'Residuals :', beta_i - beta[:len(index_beta)])
+    print(f'estimated :', beta_i)
+    print(f'true :', beta[:len(index_beta)])
     print(f'Execution time : {end - start} s')
 
 

@@ -3,6 +3,7 @@ from pyoperators import *
 from scipy.optimize import minimize
 import os
 import multiprocess as mp
+import time
 
 class WrapperCPU:
 
@@ -25,6 +26,15 @@ class WrapperCPU:
         if self.verbose:
             print(f'Requested for {self.ncpu} CPUs')
 
+    def _split_params(self, index_theta):
+
+        '''
+        
+        Distribute the parameters across all available processes
+
+        '''
+        return np.where(index_theta % self.size == self.rank)[0]
+
     def _apply_minimize(self, args):
 
         '''
@@ -38,15 +48,31 @@ class WrapperCPU:
         return r.x
     
     def perform(self, x):
+        results = np.zeros(x.shape)
+        loop = len(x) // self.ncpu
+        rest = len(x) % self.ncpu
+        start = time.time()
 
-        pool = mp.Pool(processes=self.ncpu)
+        if self.verbose:
+            
+            print(f"You're askip to do {loop} loop with {self.ncpu} CPUs each")
+            print(f"There is {rest} estimation remain")
 
-        results = pool.starmap(self._apply_minimize, [[param_values] for param_values in x])
+        for i in range(loop):
+
+            pool = mp.Pool(processes=self.ncpu)
+            results[self.ncpu*i:self.ncpu*(i+1)] = pool.starmap(self._apply_minimize, [[param_values] for param_values in x[self.ncpu*i:self.ncpu*(i+1)]])
+            pool.close()
+            pool.join()
         
-        pool.close()
-        pool.join()
+        pool = mp.Pool(processes=rest)
+        results[-rest:] = pool.starmap(self._apply_minimize, [[param_values] for param_values in x[-rest:]])
+        end = time.time()
+        if self.verbose:
+            print(f'Estimation done on {x.shape[0]} parameters in {end - start} s')
+        
 
-        return np.concatenate(results)
+        return results
 
 
 
