@@ -9,12 +9,15 @@ import time
 import pickle
 from functools import partial
 import os
+
 sys.path.append('/Users/mregnier/Desktop/Libs/qubic/qubic/scripts/MapMaking')
 
 import component_model as c
 import mixing_matrix as mm
 
 comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
 
 def _scale_components_1pix(beta, ipix, mref, allnus):
 
@@ -37,8 +40,9 @@ mref = np.array(sky.get_emission(nu0 * u.GHz, None).T * utils.bandpass_unit_conv
 allnus = np.array([140, 150, 160])
 m_nu = np.zeros((len(allnus), 12*nside**2, 3))
 
+beta = np.random.normal(1.54, 0.1, 12*nside**2)
 for j in range(12*nside**2):
-    m_nu[:, j, :] = _scale_components_1pix(np.array([1.54]), j, mref, allnus)
+    m_nu[:, j, :] = _scale_components_1pix(beta[j], j, mref, allnus)
 
 def chi2(x, ipix, mref, m_nu, allnus):
 
@@ -47,19 +51,31 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-index_beta = np.arange(0, 10, 1)
+index_beta = np.arange(0, 150, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 
-start = time.time()
+os.environ['OMP_NUM_THREADS'] = '8'
 
-beta_est = WrapperMPI(comm, chi2_partial, x0=np.ones(10), verbose=True).perform(index_beta)
-
-end = time.time()
-
-if comm.Get_rank() == 0:
+if rank == 0:
+    start = time.time()
+    beta_i = WrapperCPU(chi2_partial, x0=np.ones(1), nproc=8, verbose=True, tol=1e-20, method='TNC').perform(list(index_beta))
+    end = time.time()
     print(f'Execution time : {end - start} s')
-    print(f'Residuals :', beta_est - 1.54)
+    print(f'Residuals :', beta_i[:5] - beta[:5])
+    print(f'estimated :', beta_i[:5])
+    print(f'true :', beta[:5])
+    print(f'Execution time : {end - start} s')
+
+
+
+
+#if comm.Get_rank() == 0:
+#    print(f'Execution time : {end - start} s')
+#    print(f'Residuals :', beta_est - beta[:5])
+#    print(f'estimated :', beta_est)
+#    print(f'true :', beta[:5])
+
 
 
 

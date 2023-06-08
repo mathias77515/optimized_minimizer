@@ -1,6 +1,54 @@
 import numpy as np
 from pyoperators import *
 from scipy.optimize import minimize
+import os
+import multiprocess as mp
+
+class WrapperCPU:
+
+    def __init__(self, chi2, x0, nproc=None, method='TNC', tol=1e-3, options={}, verbose=False):
+
+        ### Do some prints
+        self.verbose = verbose
+
+        ### Minimizer
+        self.chi2 = chi2
+        self.x0 = x0
+        self.method = method
+        self.tol = tol
+        self.options = options
+        if nproc is None:
+            self.ncpu = os.cpu_count()
+        else:
+            self.ncpu = nproc
+
+        if self.verbose:
+            print(f'Requested for {self.ncpu} CPUs')
+
+    def _apply_minimize(self, args):
+
+        '''
+        
+        Apply the scipy.optimize.minimize method on the fun cost function.
+
+            
+        '''
+
+        r = minimize(self.chi2, x0=self.x0, args=args, method=self.method, tol=self.tol, options=self.options)
+        return r.x
+    
+    def perform(self, x):
+
+        pool = mp.Pool(processes=self.ncpu)
+
+        results = pool.starmap(self._apply_minimize, [[param_values] for param_values in x])
+        
+        pool.close()
+        pool.join()
+
+        return np.concatenate(results)
+
+
 
 
 class WrapperMPI:
@@ -72,7 +120,9 @@ class WrapperMPI:
             print(f'Doing minimization on pixel {index_per_process}')
         
         for _, index in enumerate(index_per_process):
-            res[index] = self._apply_minimize(self.chi2, args=(index)) 
+            print(index, index_per_process)
+            res[index] = self._apply_minimize(self.chi2, args=(index))
+        print(res)
         
         ### Wait for all processes
         self.comm.Barrier()
