@@ -28,7 +28,7 @@ def run(x, ncpu, chi2, x0, method='TNC', tol=1e-3, options={}, verbose=True):
 
 
         if rest != 0:
-            wrap = WrapperCPU(chi2, x0, nproc=rest, method=method, tol=tol, options=options, verbose=False)
+            #wrap = WrapperCPU(chi2, x0, nproc=rest, method=method, tol=tol, options=options, verbose=False)
             results[-rest:] = wrap.perform(x[-rest:])
 
         end = time.time()
