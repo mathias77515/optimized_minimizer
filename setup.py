@@ -11,7 +11,7 @@ setup(
     # Needed for dependencies
     install_requires=['scipy', 'pyoperators', 'numpy'],
     # *strongly* suggested for sharing
-    version='3.2.1',
+    version='3.2.2',
     # The license can be anything you like
     license='',
     description='Optimized minimizer for MPI in python.',
