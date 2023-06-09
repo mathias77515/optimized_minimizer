@@ -9,6 +9,7 @@ import time
 import pickle
 from functools import partial
 import os
+
 os.environ['OMP_NUM_THREADS'] = '10'
 
 sys.path.append('/Users/mregnier/Desktop/Libs/qubic/qubic/scripts/MapMaking')
@@ -57,11 +58,11 @@ index_beta = np.array([4,12,13,20,21,27,28,29,35,36,43])#np.arange(50, 60, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 cpu = 2
-wrap = WrapperMPI(comm, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10, options={}, verbose=True)
-#wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10)
+#wrap = WrapperMPI(comm, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10, options={}, verbose=True)
+wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10)
 #print(index_per_process_per_cpu)
 start = time.time()
-a = wrap(index_beta)
+a = wrap.run(index_beta)
 
 end = time.time()
 if rank == 0:

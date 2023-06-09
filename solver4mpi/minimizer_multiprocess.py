@@ -5,7 +5,8 @@ import os
 import multiprocess as mp
 import time
 from concurrent.futures import ThreadPoolExecutor
-
+from queue import Queue
+from threading import Lock
 
 class WrapperMPI:
 
@@ -100,12 +101,38 @@ class DistributeMPI(WrapperMPI):
             print(res)
         return self.comm.allreduce(res, op=MPI.SUM)
 
+    def perform(self, x):
+        results = Queue()  # File d'attente pour stocker les résultats
+        lock = Lock()  # Verrou pour synchroniser l'accès à la file d'attente
 
+        def minimize_wrapper(index, args):
+            result = self._apply_minimize(args)
+            with lock:
+                results.put((index, result))  # Ajouter l'index avec le résultat
+
+        with ThreadPoolExecutor(max_workers=self.ncpu) as executor:
+            futures = [executor.submit(minimize_wrapper, index, i) for index, i in enumerate(x)]
+
+        # Attendre la fin de toutes les tâches
+        for future in futures:
+            future.result()
+
+        # Réorganiser les résultats dans l'ordre approprié
+        final_results = [None] * len(x)
+        while not results.empty():
+            index, result = results.get()
+            final_results[index] = result
+
+        return np.concatenate(final_results)
+
+    '''
     def perform(self, x):
         with ThreadPoolExecutor(max_workers=self.ncpu) as executor:
             futures = [executor.submit(self._apply_minimize, i) for i in x]
             results = [future.result() for future in futures]
         return np.concatenate(results)
+    '''
+    
 
 class WrapperCPU:
 
