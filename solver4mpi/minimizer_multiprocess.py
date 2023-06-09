@@ -78,13 +78,13 @@ class DistributeMPI(WrapperMPI):
 
     def run(self, x):
         res = np.zeros(x.shape[0])
-        index_per_process_per_cpu_i = self._split_params_with_cpu(x, self.ncpu)
-        index_per_process_per_cpu = x[self._split_params_with_cpu(x, self.ncpu)]
+        index_per_process_per_cpu = self._split_params_with_cpu(x, self.ncpu)
+        #print(index_per_process_per_cpu)
         _loop = len(index_per_process_per_cpu)
 
         for i in range(_loop):
-            print(self.rank, index_per_process_per_cpu[i])
-            res[index_per_process_per_cpu_i[i]] = self.perform(np.array(index_per_process_per_cpu[i]))
+            print(self.rank, np.concatenate(index_per_process_per_cpu))
+            res[index_per_process_per_cpu[i]] = self.perform(x[index_per_process_per_cpu[i]])
 
         return self.comm.allreduce(res, op=MPI.SUM)
 
