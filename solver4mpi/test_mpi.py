@@ -53,7 +53,7 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-index_beta = np.arange(0, 100, 1)
+index_beta = np.arange(50, 60, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 cpu = 5
@@ -64,7 +64,7 @@ start = time.time()
 a = wrap.run(index_beta)
 end = time.time()
 if rank == 0:
-    print(np.mean(a - beta[:100]))
+    print(np.mean(a - beta[50:60]))
     print(f'Execution time : {end - start} s')
 
 
