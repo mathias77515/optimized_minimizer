@@ -55,11 +55,9 @@ index_beta = np.arange(0, 15, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 
-os.environ['OMP_NUM_THREADS'] = '8'
-
 if rank == 0:
     start = time.time()
-    beta_i = WrapperCPU(chi2_partial, x0=np.ones(1), nproc=2, verbose=True, tol=1e-20, method='TNC').perform(index_beta)
+    beta_i = run(index_beta, 5, chi2_partial, x0=np.ones(1), method='L-BFGS-B', tol=1e-6, options={}, verbose=True)#WrapperCPU(chi2_partial, x0=np.ones(1), nproc=2, verbose=True, tol=1e-20, method='TNC').perform(index_beta)
     end = time.time()
     print(f'Execution time : {end - start} s')
     print(f'Residuals :', beta_i - beta[:len(index_beta)])
