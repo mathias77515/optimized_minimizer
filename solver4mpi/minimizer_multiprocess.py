@@ -84,9 +84,10 @@ class DistributeMPI(WrapperMPI):
         _loop = len(index_per_process_per_cpu)
 
         for i in range(_loop):
-            print(self.rank, x[index_per_process_per_cpu[i]])
+            print(self.rank, index_per_process_per_cpu[i], x[index_per_process_per_cpu[i]])
             res[index_per_process_per_cpu[i]] = self.perform(x[index_per_process_per_cpu[i]])
-
+        self.comm.Barrier()
+        print(res)
         return self.comm.allreduce(res, op=MPI.SUM)
 
 

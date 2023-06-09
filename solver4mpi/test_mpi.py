@@ -53,18 +53,20 @@ def chi2(x, ipix, mref, m_nu, allnus):
     
     return np.sum((m_nu_fake - m_nu[:, ipix, :])**2)
 
-index_beta = np.arange(50, 60, 1)
+index_beta = np.array([4,12,13,20,21,27,28,29,35,36,43])#np.arange(50, 60, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 cpu = 2
-wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1))
-index_per_process_per_cpu = wrap._split_params_with_cpu(index_beta, cpu)
+wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1), method='L-BFGS-B', tol=1e-10)
 #print(index_per_process_per_cpu)
 start = time.time()
 a = wrap.run(index_beta)
+
 end = time.time()
 if rank == 0:
-    print(np.mean(a - beta[50:60]))
+    print(a)
+    print(beta[index_beta])
+    print(np.mean(a - beta[index_beta]))
     print(f'Execution time : {end - start} s')
 
 
