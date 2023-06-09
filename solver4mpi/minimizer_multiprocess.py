@@ -54,15 +54,19 @@ class WrapperMPI:
             print(self.rank, x_per_process)
 
         for ii, i in enumerate(x_per_process):
-            if self.verbose:
-                print(f'Minimizing parameter {index[i]} with rank {self.rank}')
+            
+            start = time.time()
             res[i] = self._apply_minimize(args=(index[i]))
+            end = time.time()
+
+            if self.verbose:
+                print(f'Minimized parameter {index[i]} with rank {self.rank} in {end - start:.6f} s')
         
         return self.comm.allreduce(res, op=MPI.SUM)
 
 class DistributeMPI(WrapperMPI):
 
-    def __init__(self, comm, ncpu, chi2, x0, method='L-BFGS-B', tol=1e-10, options={}, verbose=False):
+    def __init__(self, comm, ncpu, chi2, x0, method='L-BFGS-B', tol=1e-10, options={}, verbose=True):
 
         self.ncpu = ncpu
         WrapperMPI.__init__(self, comm, chi2, x0, method=method, tol=tol, options=options, verbose=verbose)
