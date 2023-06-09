@@ -78,8 +78,9 @@ class DistributeMPI(WrapperMPI):
 
     def run(self, x):
         res = np.zeros(x.shape[0])
+        
         index_per_process_per_cpu = self._split_params_with_cpu(x, self.ncpu)
-        #print(index_per_process_per_cpu)
+        #stop
         _loop = len(index_per_process_per_cpu)
 
         for i in range(_loop):
