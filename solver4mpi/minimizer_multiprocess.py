@@ -54,6 +54,7 @@ class WrapperMPI:
             print(self.rank, x_per_process)
 
         for ii, i in enumerate(x_per_process):
+            print(f'Minimizing parameter {index[i]} with rank {self.rank}')
             res[i] = self._apply_minimize(args=(index[i]))
         
         return self.comm.allreduce(res, op=MPI.SUM)
