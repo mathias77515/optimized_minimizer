@@ -22,6 +22,7 @@ class WrapperMPI:
         self.method = method
         self.tol = tol
         self.options = options
+        self.verbose = verbose
 
     def _split_params(self, index):
 
@@ -49,10 +50,11 @@ class WrapperMPI:
 
         res = np.zeros(index.shape)
         x_per_process = self._split_params(index)
-        #print(self.rank, x_per_process)
+        if self.verbose:
+            print(self.rank, x_per_process)
 
         for ii, i in enumerate(x_per_process):
-            res[i] = self._apply_minimize(args=(i))
+            res[i] = self._apply_minimize(args=(index[i]))
         
         return self.comm.allreduce(res, op=MPI.SUM)
 
@@ -84,10 +86,12 @@ class DistributeMPI(WrapperMPI):
         _loop = len(index_per_process_per_cpu)
 
         for i in range(_loop):
-            print(self.rank, index_per_process_per_cpu[i], x[index_per_process_per_cpu[i]])
+            if self.verbose:
+                print(self.rank, index_per_process_per_cpu[i], x[index_per_process_per_cpu[i]])
             res[index_per_process_per_cpu[i]] = self.perform(x[index_per_process_per_cpu[i]])
         self.comm.Barrier()
-        print(res)
+        if self.verbose:
+            print(res)
         return self.comm.allreduce(res, op=MPI.SUM)
 
 

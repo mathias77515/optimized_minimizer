@@ -9,9 +9,9 @@ setup(
     # Needed to actually package something
     packages=find_packages(),
     # Needed for dependencies
-    install_requires=['scipy', 'pyoperators', 'numpy'],
+    install_requires=['scipy', 'pyoperators', 'numpy', 'multiprocess'],
     # *strongly* suggested for sharing
-    version='3.4.2',
+    version='3.4.3',
     # The license can be anything you like
     license='',
     description='Optimized minimizer for MPI in python.',

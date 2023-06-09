@@ -57,10 +57,11 @@ index_beta = np.array([4,12,13,20,21,27,28,29,35,36,43])#np.arange(50, 60, 1)
 
 chi2_partial = partial(chi2, mref=mref, m_nu=m_nu, allnus=allnus)
 cpu = 2
-wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1), method='L-BFGS-B', tol=1e-10)
+wrap = WrapperMPI(comm, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10, options={}, verbose=False)
+#wrap = DistributeMPI(comm, cpu, chi2_partial, x0=np.ones(1)*1.5, method='TNC', tol=1e-10)
 #print(index_per_process_per_cpu)
 start = time.time()
-a = wrap.run(index_beta)
+a = wrap(index_beta)
 
 end = time.time()
 if rank == 0:
